@@ -1,0 +1,179 @@
+<!-- Local rules -->
+
+<group name="local,syslog,sshd,windows,active_directory,">
+
+  <!-- SSH Example -->
+  <rule id="100001" level="5">
+    <if_sid>5716</if_sid>
+    <srcip>1.1.1.1</srcip>
+    <description>sshd: authentication failed from IP 1.1.1.1.</description>
+    <group>authentication_failed,pci_dss_10.2.4,pci_dss_10.2.5,</group>
+  </rule>
+
+
+  <!-- Active Directory Password Reset -->
+  <rule id="100100" level="8">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">^4724$</field>
+    <description>Active Directory: User password reset by administrator</description>
+    <group>windows,active_directory,password_reset,</group>
+  </rule>
+
+  <!-- Event 5141: AD Object Deleted (Base Rule) -->
+  <rule id="100112" level="10">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">^5141$</field>
+    <description>Active Directory object deleted - Event 5141</description>
+    <group>ad_changes,ad_deletion,</group>
+    <mitre>
+      <id>T1070.006</id>
+    </mitre>
+  </rule>
+
+  <!-- Event 5141: GPO Deletion (Critical) -->
+  <rule id="100113" level="13">
+    <if_sid>100112</if_sid>
+    <field name="win.eventdata.objectClass">groupPolicyContainer</field>
+    <description>CRITICAL: Group Policy Object deleted from Active Directory</description>
+    <group>gpo_deletion,gpo_monitor,critical,</group>
+    <mitre>
+      <id>T1484.001</id>
+    </mitre>
+  </rule>
+
+
+  <!-- Event 5136: AD Attribute Modified -->
+  <rule id="100110" level="8">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">^5136$</field>
+    <description>Active Directory attribute modified - Event 5136</description>
+    <group>ad_changes,gpo_monitor,</group>
+  </rule>
+
+<!-- تغییر نام GPO -->
+<rule id="100115" level="12">
+  <if_sid>100119</if_sid>
+  <field name="win.eventdata.attributeLDAPDisplayName">^displayName$</field>
+  <field name="win.eventdata.attributeValue"
+         type="pcre2">^(?!New Group Policy Object$).+</field>
+
+  <description>
+    GPO display name changed:
+    $(win.eventdata.attributeValue)
+  </description>
+
+  <group>gpo_changes,gpo_monitor,gpo_rename,</group>
+
+  <mitre>
+    <id>T1484.001</id>
+  </mitre>
+</rule>
+
+
+<!-- Event 5136: GPO displayName Changed (Actual Rename Detection) -->
+<rule id="100121" level="12">
+  <if_sid>100115</if_sid>
+  <field name="win.eventdata.attributeLDAPDisplayName">^displayName$</field>
+  <field name="win.eventdata.attributeValue" negate="yes">^New Group Policy Object$</field>
+  <field name="win.eventdata.attributeValue" negate="yes">^[0-9\.]+$</field>
+  <description>ALERT: GPO Display Name Changed (Possible Rename)</description>
+  <group>gpo_rename,gpo_monitor,critical,</group>
+  <mitre>
+    <id>T1484.001</id>
+  </mitre>
+</rule>
+
+  <!-- Event 5137: AD Object Created -->
+  <rule id="100111" level="8">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">^5137$</field>
+    <description>Active Directory object created - Event 5137</description>
+    <group>ad_changes,gpo_monitor,</group>
+  </rule>
+
+<rule id="100116" level="10">
+  <if_sid>100111</if_sid>
+  <field name="win.eventdata.objectClass">^groupPolicyContainer$</field>
+
+  <description>
+    New GPO created:
+    $(win.eventdata.objectDN)
+  </description>
+
+  <group>gpo_creation,gpo_monitor,</group>
+
+  <mitre>
+    <id>T1484.001</id>
+  </mitre>
+</rule>
+
+
+  <!-- Event 4662: DS Object Access -->
+  <rule id="100117" level="7">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">^4662$</field>
+    <field name="win.eventdata.objectServer">DS</field>
+    <description>Active Directory object access detected - Event 4662</description>
+    <group>ad_access,</group>
+  </rule>
+
+  <!-- Event 4739: Domain Policy Changed -->
+  <rule id="100118" level="12">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">^4739$</field>
+    <description>Domain Policy Changed - Event 4739</description>
+    <group>ad_changes,gpo_monitor,domain_policy,</group>
+    <mitre>
+      <id>T1484.001</id>
+    </mitre>
+  </rule>
+
+<!-- تمام تغییرات GPO - Event 5136 -->
+<rule id="100119" level="10">
+  <if_sid>60103</if_sid>
+  <field name="win.system.eventID">^5136$</field>
+  <field name="win.eventdata.objectClass">^groupPolicyContainer$</field>
+
+  <description>
+    GPO attribute changed:
+    $(win.eventdata.attributeLDAPDisplayName) =
+    $(win.eventdata.attributeValue)
+  </description>
+
+  <group>gpo_changes,gpo_monitor,</group>
+
+  <mitre>
+    <id>T1484.001</id>
+  </mitre>
+</rule>
+
+
+
+
+
+  <!-- MikroTik Rules -->
+  <rule id="100200" level="8">
+    <decoded_as>mikrotik-login</decoded_as>
+    <description>MikroTik: Login successful</description>
+    <group>mikrotik,authentication_success</group>
+  </rule>
+
+  <rule id="100201" level="5">
+    <decoded_as>mikrotik-logout</decoded_as>
+    <description>MikroTik: Logout</description>
+    <group>mikrotik,authentication</group>
+  </rule>
+
+  <rule id="100202" level="12">
+    <decoded_as>mikrotik-failed</decoded_as>
+    <description>MikroTik: Failed login</description>
+    <group>mikrotik,authentication_failed</group>
+  </rule>
+
+  <rule id="100203" level="8">
+    <decoded_as>mikrotik-config</decoded_as>
+    <description>MikroTik: Configuration changed</description>
+    <group>mikrotik,config_change</group>
+  </rule>
+
+</group>
