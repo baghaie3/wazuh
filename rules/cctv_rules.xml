@@ -1,0 +1,23 @@
+sudo tee /var/ossec/etc/rules/cctv_rules.xml >/dev/null <<'EOF'
+<group name="cctv,facility,iot,">
+
+  <rule id="118201" level="7">
+    <decoded_as>cctv-add-user</decoded_as>
+    <description>CCTV user added: $(UserName) by $(User) from $(Address)</description>
+    <group>cctv_user_management,account_creation,</group>
+  </rule>
+
+  <rule id="118202" level="8">
+    <decoded_as>cctv-delete-user</decoded_as>
+    <description>CCTV user deleted: $(UserName) by $(User) from $(Address)</description>
+    <group>cctv_user_management,account_deletion,</group>
+  </rule>
+
+  <rule id="118301" level="6">
+    <decoded_as>cctv-save-config</decoded_as>
+    <description>CCTV configuration changed: $(Data) by $(User) from $(Address)</description>
+    <group>cctv_configuration,configuration_change,</group>
+  </rule>
+
+</group>
+EOF
