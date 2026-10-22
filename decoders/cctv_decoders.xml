@@ -1,0 +1,26 @@
+sudo tee /var/ossec/etc/decoders/cctv_decoders.xml > /dev/null <<'EOF'
+<decoder name="cctv">
+  <prematch type="pcre2">.*"(AddUser|DeleteUser|SaveConfig)"\s*</prematch>
+</decoder>
+
+<decoder name="cctv-add-user">
+  <parent>cctv</parent>
+  <prematch type="pcre2">.*"AddUser"\s*</prematch>
+  <plugin_decoder offset="after_prematch">JSON_Decoder</plugin_decoder>
+  <use_own_name>true</use_own_name>
+</decoder>
+
+<decoder name="cctv-delete-user">
+  <parent>cctv</parent>
+  <prematch type="pcre2">.*"DeleteUser"\s*</prematch>
+  <plugin_decoder offset="after_prematch">JSON_Decoder</plugin_decoder>
+  <use_own_name>true</use_own_name>
+</decoder>
+
+<decoder name="cctv-save-config">
+  <parent>cctv</parent>
+  <prematch type="pcre2">.*"SaveConfig"\s*</prematch>
+  <plugin_decoder offset="after_prematch">JSON_Decoder</plugin_decoder>
+  <use_own_name>true</use_own_name>
+</decoder>
+EOF
